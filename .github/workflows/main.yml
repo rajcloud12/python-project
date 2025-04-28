@@ -17,8 +17,8 @@ jobs:
       # Step 2: Docker login using environment variables
       - name: Docker Login
         env:
-          DOCKER_LOGIN: ${{ env.docker.DOCKER_LOGIN }}
-          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}  # Secret for Docker password
+          DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}  # Use secret for Docker login
+          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}   # Secret for Docker password
         run: |
           echo "$DOCKER_PASS" | docker login -u "$DOCKER_LOGIN" --password-stdin
 
