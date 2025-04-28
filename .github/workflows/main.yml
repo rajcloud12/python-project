@@ -10,8 +10,8 @@ env:
   IMAGE_TAG: latest
 
 jobs:
-  build:
-    name: Build Docker Image
+  build-and-push:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout the code
@@ -22,40 +22,11 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USER }} # Ensure this secret is added in your repository settings
-          password: ${{ secrets.DOCKER_PASS }} # Ensure this secret is added in your repository settings
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
 
-      # Step 3: Check for the Dockerfile
-      - name: Check for Dockerfile
-        run: |
-          if [ ! -f Dockerfile ]; then
-            echo "Error: Dockerfile not found in the build context!"
-            exit 1
-          fi
-
-      # Step 4: Build Docker Image
-      - name: Build Docker Image
+      # Step 3: Build and Push Docker Image
+      - name: Build and Push Docker Image
         run: |
           docker build -t $IMAGE_NAME:$IMAGE_TAG .
-          if ! docker images | grep -q "$IMAGE_NAME"; then
-            echo "Image not found locally after build!"
-            exit 1
-          fi
-
-  push:
-    name: Push Docker Image
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      # Step 1: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USER }} # Ensure this secret is added in your repository settings
-          password: ${{ secrets.DOCKER_PASS }} 
-
-      # Step 2: Push Docker Image to DockerHub
-      - name: Push Docker Image
-        run: |
-          docker push $IMAGE_NAME:$IMAGE_TAG || (echo "Error during Docker push!" && exit 1)
-          echo "Image successfully pushed to Docker Hub!"
+          docker push $IMAGE_NAME:$IMAGE_TAG
