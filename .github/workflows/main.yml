@@ -1,37 +1,52 @@
-name: Build Docker Image on Push
+name: Docker Build and Push
 
 on:
-  push:
-    branches:
-      - main  # Trigger on pushes to the 'main' branch
+    push:
+        branches:
+            - main
+
+env:
+    IMAGE_NAME: rajcloud12/python
+    IMAGE_TAG: latest
 
 jobs:
-  build-docker-image:
-    runs-on: ubuntu-latest
+    build:
+        name: Build Docker Image
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+                uses: actions/checkout@v3
 
-    steps:
-      # Step 1: Checkout the repository code
-      - name: Checkout Code
-        uses: actions/checkout@v3
+            - name: Log in to Docker Hub
+                uses: docker/login-action@v2
+                with:
+                    username: ${{ secrets.DOCKER_USER }}
+                    password: ${{ secrets.DOCKER_PASS }}
 
-      # Step 2: Docker login using environment variables
-      - name: Docker Login
-        env:
-          DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
-          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
-        run: |
-          if [ -z "$DOCKER_LOGIN" ] || [ -z "$DOCKER_PASS" ]; then
-            echo "Docker credentials are missing"
-            exit 1
-          fi
-          echo "$DOCKER_PASS" | docker login --username "$DOCKER_LOGIN" --password-stdin
+            - name: Check for Dockerfile
+                run: |
+                    if [ ! -f Dockerfile ]; then
+                        echo "Error: Dockerfile not found in the build context!"
+                        exit 1
+                    fi
 
-      # Step 3: Build Docker image using the Dockerfile in the repository
-      - name: Build Docker Image
-        run: |
-          docker build -t $DOCKER_LOGIN/my-new-image:latest .
+            - name: Build Docker Image
+                run: |
+                    docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                    docker images | grep "$IMAGE_NAME" || (echo "Image not found locally after build!" && exit 1)
 
-      # Step 4: Push the built Docker image to DockerHub
-      - name: Push Docker Image
-        run: |
-          docker push $DOCKER_LOGIN/my-new-image:latest
+    push:
+        name: Push Docker Image
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Log in to Docker Hub
+                uses: docker/login-action@v2
+                with:
+                    username: ${{ secrets.DOCKER_USER }}
+                    password: ${{ secrets.DOCKER_PASS }}
+
+            - name: Push Docker Image
+                run: |
+                    docker push $IMAGE_NAME:$IMAGE_TAG || (echo "Error during Docker push!" && exit 1)
+                    echo "Image successfully pushed to Docker Hub!"
