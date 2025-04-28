@@ -17,10 +17,14 @@ jobs:
       # Step 2: Docker login using environment variables
       - name: Docker Login
         env:
-          DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}  # Use secret for Docker login
-          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}   # Secret for Docker password
+          DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
         run: |
-          echo "$DOCKER_PASS" | docker login -u "$DOCKER_LOGIN" --password-stdin
+          if [ -z "$DOCKER_LOGIN" ] || [ -z "$DOCKER_PASS" ]; then
+            echo "Docker credentials are missing"
+            exit 1
+          fi
+          echo "$DOCKER_PASS" | docker login --username "$DOCKER_LOGIN" --password-stdin
 
       # Step 3: Build Docker image using the Dockerfile in the repository
       - name: Build Docker Image
