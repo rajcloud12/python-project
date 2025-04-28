@@ -1,0 +1,33 @@
+name: Build Docker Image on Push
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the 'main' branch
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Docker login using environment variables
+      - name: Docker Login
+        env:
+          DOCKER_LOGIN: ${{ env.docker.DOCKER_LOGIN }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}  # Secret for Docker password
+        run: |
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_LOGIN" --password-stdin
+
+      # Step 3: Build Docker image using the Dockerfile in the repository
+      - name: Build Docker Image
+        run: |
+          docker build -t $DOCKER_LOGIN/my-new-image:latest .
+
+      # Step 4: Push the built Docker image to DockerHub
+      - name: Push Docker Image
+        run: |
+          docker push $DOCKER_LOGIN/my-new-image:latest
