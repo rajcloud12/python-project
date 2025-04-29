@@ -1,22 +1,37 @@
-name: This a workflow title 
-on: [push] # When pushing to any branch then run this action
-# Env variable
+name: Docker Build and Push
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the 'main' branch
+
 env:
-  DOCKER_USER: ${{secrets.DOCKER_USER}}
-  DOCKER_PASS: ${{secrets.DOCKER_PASSWORD}}
-  REPO_NAME: python-project
+  IMAGE_NAME: rajcloud12/python-project
+  IMAGE_TAG: latest
+
 jobs:
-  push-image-to-docker-hub:  # job name
-    runs-on: ubuntu-latest  # runner name : (ubuntu latest version) 
+  build-and-push:
+    runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2 # first action : checkout source code
-    - name: docker login
-      run: | # log into docker hub account
-        docker login -u $DOCKER_USER -p $DOCKER_PASS  
-    - name: Get current date # get the date of the build
-      id: date
-      run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
-    - name: Build the Docker image # push The image to the docker hub
-      run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}
-    - name: Docker Push
-      run: docker push $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}
+      # Step 1: Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Docker Login
+      - name: Docker Login
+        run: |
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+        env:
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
+
+      # Step 3: Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      # Step 4: Push Docker Image to DockerHub
+      - name: Push Docker Image
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
