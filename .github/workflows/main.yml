@@ -1,32 +1,13 @@
-name: Docker Build and Push
+name: Basic Workflow
 
 on:
   push:
     branches:
-      - main
-
-env:
-  IMAGE_NAME: rajcloud12/python-project
-  IMAGE_TAG: latest
+      - main  # Trigger on pushes to the 'main' branch
 
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image
+  simple-job:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      # Step 2: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }}
-
-      # Step 3: Build and Push Docker Image
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG .
-          docker push $IMAGE_NAME:$IMAGE_TAG
+      - name: Print Message
+        run: echo "Hello, GitHub Actions!"
